@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        #game-options {
+            margin-bottom: 20px;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .cell:hover {
+            background-color: #d0d0d0;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #game-status p {
+            font-size: 1.5rem;
+            margin: 20px 0;
+        }
+
+        .winner {
+            color: green;
+        }
+
+        .loser {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Tic-Tac-Toe</h1>
+        <div id="game-options">
+            <button id="two-player">2 Player Mode</button>
+            <button id="ai-player">Play vs AI</button>
+        </div>
+        <div id="game-board" class="hidden">
+            <div class="row">
+                <div class="cell" data-cell="0"></div>
+                <div class="cell" data-cell="1"></div>
+                <div class="cell" data-cell="2"></div>
+            </div>
+            <div class="row">
+                <div class="cell" data-cell="3"></div>
+                <div class="cell" data-cell="4"></div>
+                <div class="cell" data-cell="5"></div>
+            </div>
+            <div class="row">
+                <div class="cell" data-cell="6"></div>
+                <div class="cell" data-cell="7"></div>
+                <div class="cell" data-cell="8"></div>
+            </div>
+        </div>
+        <div id="game-status" class="hidden">
+            <p id="winner"></p>
+            <button id="restart">Restart</button>
+        </div>
+    </div>
+    <script>
+        let gameBoard = [null, null, null, null, null, null, null, null, null];
+        let currentPlayer = 'X';
+        let isGameOver = false;
+        let isAIPlaying = false;
+
+        document.getElementById("two-player").addEventListener('click', startGame)
+        document.getElementById("ai-player").addEventListener('click', startAIGame)
+        document.getElementById("restart").addEventListener('click', restartGame)
+
+        function startGame() {
+            isAIPlaying = false
+            currentPlayer = 'X'
+            isGameOver = false
+            document.getElementById('game-options').classList.add('hidden');
+            document.getElementById('game-board').classList.remove('hidden');
+            document.getElementById('game-status').classList.add('hidden');
+            gameBoard = [null, null, null, null, null, null, null, null, null];
+            renderBoard()
+        }
+
+        function startAIGame() {
+            isAIPlaying = true
+            isGameOver = false
+            document.getElementById('game-options').classList.add('hidden');
+            document.getElementById('game-board').classList.remove('hidden');
+            document.getElementById('game-status').classList.add('hidden');
+            gameBoard = [null, null, null, null, null, null, null, null, null];
+            currentPlayer = 'X'
+            renderBoard()
+            aiMove()
+        }
+
+        function renderBoard() {
+            const cells = document.querySelectorAll('.cell')
+            cells.forEach((cell, index) => {
+                cell.textContent = gameBoard[index] === null ? '' : gameBoard[index]
+                cell.removeEventListener('click', handleMove) // Remove existing event listener
+                cell.addEventListener('click', () => handleMove(index))
+            });
+        }
+
+        function handleMove(index) {
+            if (gameBoard[index] !== null || isGameOver) return;
+            gameBoard[index] = currentPlayer
+            renderBoard()
+            checkWinner()
+            currentPlayer = currentPlayer == 'X' ? 'O' : 'X'
+            if (isAIPlaying && currentPlayer == 'O' && !isGameOver) {
+                aiMove()
+            }
+        }
+
+        function checkWinner() {
+            let winPatterns = [
+                [0, 1, 2],
+                [3, 4, 5],
+                [6, 7, 8],
+                [0, 3, 6],
+                [1, 4, 7],
+                [2, 5, 8],
+                [0, 4, 8],
+                [2, 4, 6]
+            ];
+            for (let pattern of winPatterns) {
+                const [a, b, c] = pattern
+                if (gameBoard[a] && gameBoard[a] == gameBoard[b] && gameBoard[b] == gameBoard[c]) {
+                    isGameOver = true
+                    setWinner(gameBoard[a])
+                    return;
+                }
+            }
+            if (!gameBoard.includes(null)) {
+                isGameOver = true;
+                setWinner('Draw');
+            }
+        }
+
+        function setWinner(winner) {
+            const winnerText = document.getElementById('winner');
+            winnerText.textContent = winner === 'Draw' ? "It's a Draw!" : `${winner} Wins!`;
+            winnerText.className = winner === 'X' ? 'winner' : winner === 'O' ? 'loser' : '';
+            document.getElementById('game-status').classList.remove('hidden');
+        }
+
+        function aiMove() {
+            const emptyCells = gameBoard.map((value, index) => value === null ? index : null).filter(index => index !== null)
+            const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)]
+            gameBoard[randomCell] = 'O';
+            renderBoard()
+            checkWinner()
+            currentPlayer = 'X'
+        }
+
+        function restartGame() {
+            document.getElementById('game-status').classList.add('hidden');
+            gameBoard = [null, null, null, null, null, null, null, null, null];
+            currentPlayer = 'X';
+            isGameOver = false;
+            renderBoard();
+        }
+    </script>
+</body>
+
+</html>
